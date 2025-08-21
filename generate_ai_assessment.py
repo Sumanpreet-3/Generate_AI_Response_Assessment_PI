@@ -22,6 +22,8 @@ class GenerateSummaryRequest(BaseModel):
     control_id: str
     control_description: str
     asset_type: str
+    requirement_description: str
+    subrequirement_description: str
 
 class SummaryResponse(BaseModel):
     summary: str
@@ -41,29 +43,40 @@ async def generate_summary(request: GenerateSummaryRequest):
 You are an expert PCI DSS auditor and consultant with deep knowledge of payment card industry data security standards. 
 
 ## Task
-Analyze control implementations and Generate a professional,actionable assessment summary based on the following input data:
-Control ID: {request.control_id}
-Control Description: {request.control_description}
-Asset Type: {request.asset_type}
-Questionnaire: {questionnaire}
-This summary will be used by Qualified Security Assessors (QSAs) to evaluate compliance with PCI DSS standards.
-Your task is to synthesize the provided control information(Control ID and Control Description),Asset Type and Questionnaire to help QSAs determine compliance status.
-And provide a clear recommendation based on the analysis that the QSA can use in their assessment report.
+
+You are being given transcription of an interview with a client regarding the PCI DSS compliance of a specific control specified against #Control ID# below.
+The interview is in context of an Asset in the client organization of Asset Type specified below against #Asset Type#. Can you generate a bulleted summary of the interview 
+that is concise, brief and clear. Each bullet point should be about each check list item that the QSA needs to check for compliance for this asset type and control.
+The objective is that the QSA can use this summary to quickly understand the compliance status of the control for this particular asset type.
+Some more context is about the #Requirement#, #Subrequirement# and  #Control Description#, of PCI DSS framework, that this control falls in is provided below.
+
+#Control ID#: {request.control_id}
+#Control Description#: {request.control_description}
+#Requirement#: {request.requirement_description}
+#Subrequirement#: {request.subrequirement_description}
+#Asset Type#: {request.asset_type}
+#Questionnaire#: {questionnaire}
+
+This summary will be used by Qualified Security Assessors (QSAs) to evaluate compliance of this asset with the given control of PCI DSS standards.
+Your task is to extract the key points from the interview that will help QSAs determine compliance status.
+In addition to the bulleted summary also provide your recommendation on whether the asset is compliant with the control or not. The recommendation should be one of the following:
+- **IN PLACE**: Control is properly implemented and functioning as required
+- **OUT OF PLACE**: Control is missing, inadequate, or not functioning properly
+- **NOT TESTED**: Insufficient information to determine compliance status
+- **NOT APPLICABLE**: Control requirement does not apply to current environment
+
 Use professional language suitable for QSA(Qualified Security Assessor) to facilitate their decision making process in compliance assessments.
 
 ## Input Data Format
 **Control ID**: [PCI DSS control identifier, e.g., 1.1.1]
 **Control Description**: [Detailed control description text]
+**Requirement**: [PCI DSS requirement text]
 **Asset Type**: [Systems, applications, network components, or processes in scope]
 **Questionnaire**: [contains the question and client response pairs related to the control]
 
 ## Output Requirements
 
-### Summary Format (Exactly 100 words)
-Provide a concise assessment summary that includes:
-- Current state of control implementation
-- Technical and procedural findings
-- Basis for the recommendation
+
 
 ### Recommendation Categories
 Select ONE of the following:
@@ -74,22 +87,24 @@ Select ONE of the following:
 
 ## Response Template
 
-**Assessment Summary**: [Exactly 100 words analyzing the control implementation based on Asset Type and Questionnaire, focusing on compliance ]
+**Assessment Summary**: [Exactly 100 words of bullted list with each bullet giving a key point from the interview that is relevant determining the compliance status in context of the given asset and control,Don't hallucinate or provide your interpretation. Just report whats in the interview. Do not repeat the questions or answers.
+Do not maintain proper sentences. Just provide the key points in bulleted list format.So that the QSA can quickly understand the compliance status of the control for this particular asset type.]
+]
 
 **Recommendation**: [IN PLACE | OUT OF PLACE | NOT TESTED | NOT APPLICABLE]
 
-**Key Justification**: [2-3 bullet points explaining the recommendation basis]
+**Key Justification**: [If the **Recommendation** is IN PLACE. Provide 2-3 bullet points explaining the recommendation basis. Otherwise, this can be empty]
+
+**GAPS IDENTIFIED**: [If the **Recommendation** is OUT OF PLACE. Provide 2-3 bullet points explaining the gaps identifiedthat need to be addressed for PCI compliance of this asset for the given control. Otherwise, this can be empty]
 
 ## Quality Guidelines
 - Be objective and evidence-based
+- **Assessment Summary** should be concise, clear and bulleted. It should be objective and only contain data from interview. Do not hallucinate or provide your interpretation. Just report whats in the interview.
 - Use precise PCI DSS terminology
 - Focus on compliance-relevant findings
 - Avoid speculation or assumptions
 - Maintain professional, auditor-appropriate tone
 - Ensure recommendations align with PCI DSS standards
-
-
-
   """
 
     try:
