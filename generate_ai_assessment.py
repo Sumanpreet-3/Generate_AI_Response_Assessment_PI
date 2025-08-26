@@ -11,7 +11,19 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # client = OpenAI(api_key=OPEN_AI_KEY)
 
 
+
+
 app = FastAPI(title="PCI DSS QSA Assessment API")
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify your NestJS origin
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class QAItem(BaseModel):
     text: str
@@ -28,6 +40,8 @@ class GenerateSummaryRequest(BaseModel):
 class SummaryResponse(BaseModel):
     summary: str
     
+
+
 
 @app.post("/generate_summary", response_model=SummaryResponse)
 async def generate_summary(request: GenerateSummaryRequest):
@@ -61,7 +75,7 @@ This summary will be used by Qualified Security Assessors (QSAs) to evaluate com
 Your task is to extract the key points from the interview that will help QSAs determine compliance status.
 In addition to the bulleted summary also provide your recommendation on whether the asset is compliant with the control or not. The recommendation should be one of the following:
 - **IN PLACE**: Control is properly implemented and functioning as required
-- **OUT OF PLACE**: Control is missing, inadequate, or not functioning properly
+- **NOT IN PLACE**: Control is missing, inadequate, or not functioning properly
 - **NOT TESTED**: Insufficient information to determine compliance status
 - **NOT APPLICABLE**: Control requirement does not apply to current environment
 
@@ -70,32 +84,22 @@ Use professional language suitable for QSA(Qualified Security Assessor) to facil
 ## Input Data Format
 **Control ID**: [PCI DSS control identifier, e.g., 1.1.1]
 **Control Description**: [Detailed control description text]
-**Requirement**: [PCI DSS requirement text]
+**Requirement**: [PCI DSS requirement text for the control]
+**Subrequirement**: [PCI DSS subrequirement text for the control]
 **Asset Type**: [Systems, applications, network components, or processes in scope]
 **Questionnaire**: [contains the question and client response pairs related to the control]
 
 ## Output Requirements
 
-
-
-### Recommendation Categories
-Select ONE of the following:
-- **IN PLACE**: Control is properly implemented and functioning as required
-- **OUT OF PLACE**: Control is missing, inadequate, or not functioning properly
-- **NOT TESTED**: Insufficient information to determine compliance status
-- **NOT APPLICABLE**: Control requirement does not apply to current environment
-
 ## Response Template
 
-**Assessment Summary**: [Exactly 100 words of bullted list with each bullet giving a key point from the interview that is relevant determining the compliance status in context of the given asset and control,Don't hallucinate or provide your interpretation. Just report whats in the interview. Do not repeat the questions or answers.
-Do not maintain proper sentences. Just provide the key points in bulleted list format.So that the QSA can quickly understand the compliance status of the control for this particular asset type.]
-]
+**Assessment Summary**: [Exactly 100 words of bullted list with each bullet giving a key point from the interview that is relevant determining the compliance status in context of the given asset and control, Do not repeat the questions or answers.Do not maintain proper sentences, Just provide the key points in bulleted list format.So that the QSA can quickly understand the compliance status of the control for this particular asset type.]
 
 **Recommendation**: [IN PLACE | OUT OF PLACE | NOT TESTED | NOT APPLICABLE]
 
 **Key Justification**: [If the **Recommendation** is IN PLACE. Provide 2-3 bullet points explaining the recommendation basis. Otherwise, this can be empty]
 
-**GAPS IDENTIFIED**: [If the **Recommendation** is OUT OF PLACE. Provide 2-3 bullet points explaining the gaps identifiedthat need to be addressed for PCI compliance of this asset for the given control. Otherwise, this can be empty]
+**GAPS IDENTIFIED**: [If the **Recommendation** is NOT IN PLACE. Provide 2-3 bullet points explaining the gaps identifiedthat need to be addressed for PCI compliance of this asset for the given control. Otherwise, this can be empty]
 
 ## Quality Guidelines
 - Be objective and evidence-based
